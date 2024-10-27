@@ -27,13 +27,13 @@ def parse_billing_data(data: str) -> List[Dict]:
     Returns:
         List[Dict]: List of parsed transactions as dictionaries.
     """
-    # Updated pattern to treat percentage as cash-back percentage and value as cash-back amount
+    # Updated pattern to capture the sign before the amount
     pattern = re.compile(
         r"(?P<date>\d{2}/\d{2}/\d{4})\s+"               # Date in MM/DD/YYYY format
         r"(?P<description>.+?)\s+"                      # Description (allow flexibility)
         r"(?P<cashback_percentage>-?\d+%)\s+"           # Cash-back percentage (can be negative)
-        r"\$(?P<cashback_amount>-?[\d\.]+)\s+"          # Cash-back amount (can be negative)
-        r"\$(?P<total>-?[\d\.]+)"                       # Total transaction amount (can be negative)
+        r"(?P<cashback_sign>[-+]?)\$(?P<cashback_amount>[\d\.]+)\s+"  # Optional sign before cashback amount
+        r"(?P<total_sign>[-+]?)\$(?P<total>[\d\.]+)"                 # Optional sign before total amount
     )
     
     transactions = []
@@ -47,6 +47,18 @@ def parse_billing_data(data: str) -> List[Dict]:
             
             # Convert the date using string manipulation
             transaction['date'] = convert_date_to_iso(transaction['date'])
+            
+            # Apply the sign to the cashback_amount
+            if transaction['cashback_sign'] == '-':
+                transaction['cashback_amount'] = f"-{transaction['cashback_amount']}"
+            
+            # Apply the sign to the total
+            if transaction['total_sign'] == '-':
+                transaction['total'] = f"-{transaction['total']}"
+            
+            # Remove the sign keys as they are now integrated into the amount values
+            del transaction['cashback_sign']
+            del transaction['total_sign']
             
             transactions.append(transaction)
     
