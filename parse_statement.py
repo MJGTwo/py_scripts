@@ -1,5 +1,6 @@
 import re
 import sys
+import argparse
 from typing import List, Dict
 
 def parse_billing_data(data: str) -> List[Dict]:
@@ -45,21 +46,44 @@ def read_file(file_path: str) -> str:
     with open(file_path, 'r') as file:
         return file.read()
 
+def parse_multiple_files(file_paths: List[str]) -> List[Dict]:
+    """
+    Parses multiple files and returns the combined list of transactions.
+    
+    Args:
+        file_paths (List[str]): List of file paths to be read and parsed.
+    
+    Returns:
+        List[Dict]: Combined list of parsed transactions.
+    """
+    all_transactions = []
+    
+    for file_path in file_paths:
+        raw_data = read_file(file_path)
+        transactions = parse_billing_data(raw_data)
+        all_transactions.extend(transactions)
+    
+    return all_transactions
+
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python parse_statement.py <file_path>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Parse billing statement files.")
     
-    file_path = sys.argv[1]
+    # Add a CLI argument for multiple file inputs
+    parser.add_argument(
+        '-f', '--files', 
+        nargs='+', 
+        required=True, 
+        help="List of statement files to process."
+    )
     
-    # Read file content
-    raw_data = read_file(file_path)
+    # Parse the arguments
+    args = parser.parse_args()
     
-    # Parse the billing data
-    billing_transactions = parse_billing_data(raw_data)
+    # Parse the files and collect all transactions
+    all_transactions = parse_multiple_files(args.files)
     
     # Output the parsed transactions to the terminal
-    for transaction in billing_transactions:
+    for transaction in all_transactions:
         print(transaction)
 
 if __name__ == "__main__":
