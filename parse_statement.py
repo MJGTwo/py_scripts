@@ -3,9 +3,23 @@ import sys
 import argparse
 from typing import List, Dict
 
+def convert_date_to_iso(date: str) -> str:
+    """
+    Converts a date from MM/DD/YYYY to YYYY-MM-DD using string manipulation.
+    
+    Args:
+        date (str): Date in MM/DD/YYYY format.
+    
+    Returns:
+        str: Date in YYYY-MM-DD format.
+    """
+    month, day, year = date.split('/')
+    return f"{year}-{month}-{day}"
+
 def parse_billing_data(data: str) -> List[Dict]:
     """
-    Parses raw billing data text and extracts transactions including cash-back information.
+    Parses raw billing data text and extracts transactions including cash-back information,
+    converting dates to ISO 8601 format using string manipulation.
     
     Args:
         data (str): Raw billing data as a string.
@@ -15,7 +29,7 @@ def parse_billing_data(data: str) -> List[Dict]:
     """
     # Updated pattern to treat percentage as cash-back percentage and value as cash-back amount
     pattern = re.compile(
-        r"(?P<date>\d{2}/\d{2}/\d{4})\s+"               # Date
+        r"(?P<date>\d{2}/\d{2}/\d{4})\s+"               # Date in MM/DD/YYYY format
         r"(?P<description>.+?)\s+"                      # Description (allow flexibility)
         r"(?P<cashback_percentage>-?\d+%)\s+"           # Cash-back percentage (can be negative)
         r"\$(?P<cashback_amount>-?[\d\.]+)\s+"          # Cash-back amount (can be negative)
@@ -29,7 +43,12 @@ def parse_billing_data(data: str) -> List[Dict]:
     for line in lines:
         match = pattern.match(line)
         if match:
-            transactions.append(match.groupdict())
+            transaction = match.groupdict()
+            
+            # Convert the date using string manipulation
+            transaction['date'] = convert_date_to_iso(transaction['date'])
+            
+            transactions.append(transaction)
     
     return transactions
 
